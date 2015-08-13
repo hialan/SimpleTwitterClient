@@ -13,6 +13,7 @@ import android.widget.TextView;
 
 import com.codepath.apps.mysimpletweets.R;
 import com.codepath.apps.mysimpletweets.models.User;
+import com.squareup.picasso.Picasso;
 
 public class ComposeActivity extends ActionBarActivity {
     private EditText etNewTweet;
@@ -58,12 +59,10 @@ public class ComposeActivity extends ActionBarActivity {
         ivComposeUserIcon = (ImageView) findViewById(R.id.ivComposeProfileImage);
 
         User user = (User) getIntent().getSerializableExtra("user");
-        /*
         tvComposeUserName.setText(user.getName());
-        tvComposeScreenName.setText(user.getScreenName());
+        tvComposeScreenName.setText("@" + user.getScreenName());
 
         Picasso.with(this).load(user.getProfileImageUrl()).into(ivComposeUserIcon);
-        */
     }
 
     private void onTweet() {
