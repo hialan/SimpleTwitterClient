@@ -14,6 +14,7 @@ import com.codepath.apps.mysimpletweets.R;
 import com.codepath.apps.mysimpletweets.TwitterApplication;
 import com.codepath.apps.mysimpletweets.TwitterClient;
 import com.codepath.apps.mysimpletweets.adapters.TweetsArrayAdapter;
+import com.codepath.apps.mysimpletweets.listeners.EndlessScrollListener;
 import com.codepath.apps.mysimpletweets.models.Tweet;
 import com.codepath.apps.mysimpletweets.models.User;
 import com.loopj.android.http.JsonHttpResponseHandler;
@@ -39,16 +40,27 @@ public class TimelineActivity extends ActionBarActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_timeline);
-        lvTweets = (ListView) findViewById(R.id.lvTweets);
+
         tweets = new ArrayList<Tweet>();
         aTweets = new TweetsArrayAdapter(this, tweets);
-        lvTweets.setAdapter(aTweets);
         client = TwitterApplication.getRestClient(); // singleton client
+
+        lvTweets = (ListView) findViewById(R.id.lvTweets);
+        lvTweets.setAdapter(aTweets);
+        lvTweets.setOnScrollListener(new EndlessScrollListener() {
+            @Override
+            public void onLoadMore(int page, int totalItemsCount) {
+                Tweet tweet = tweets.get(tweets.size() - 1);
+                populateTimeline(tweet.getUniqueId());
+            }
+        });
+
         swipeContainer = (SwipeRefreshLayout) findViewById(R.id.swipeContainer);
         swipeContainer.setOnRefreshListener(new SwipeRefreshLayout.OnRefreshListener() {
             @Override
             public void onRefresh() {
-                populateTimeline();
+                aTweets.clear();
+                populateTimeline(-1);
             }
         });
         swipeContainer.setColorSchemeResources(android.R.color.holo_blue_bright,
@@ -65,17 +77,16 @@ public class TimelineActivity extends ActionBarActivity {
             });
         }
 
-        populateTimeline();
+        populateTimeline(-1);
     }
 
     // Send an API request
     // convert Json to TimeLine object
-    private void populateTimeline() {
-        client.getHomeTimeline(new JsonHttpResponseHandler() {
+    private void populateTimeline(final long max_id) {
+        client.getHomeTimeline(max_id, new JsonHttpResponseHandler() {
             // SUCCESS
             @Override
             public void onSuccess(int statusCode, Header[] headers, JSONArray json) {
-                aTweets.clear();
                 aTweets.addAll(Tweet.fromJSONArray(json));
             }
 
@@ -105,6 +116,7 @@ public class TimelineActivity extends ActionBarActivity {
                 @Override
                 public void onSuccess(int statusCode, Header[] headers, JSONObject response) {
                     aTweets.insert(Tweet.fromJSON(response), 0);
+                    lvTweets.setSelectionFromTop(0, 0);
                     Toast.makeText(TimelineActivity.this, "Success!", Toast.LENGTH_SHORT).show();
                 }
 
