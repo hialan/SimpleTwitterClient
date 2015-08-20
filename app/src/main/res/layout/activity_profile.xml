@@ -42,9 +42,10 @@
             android:layout_height="wrap_content"
             android:text="New Text"
             android:id="@+id/tvTagline"
-            android:layout_alignBottom="@+id/ivProfileImage"
-            android:layout_alignLeft="@+id/tvUserName"
-            android:layout_alignStart="@+id/tvUserName" />
+            android:layout_below="@+id/tvUserName"
+            android:layout_toRightOf="@+id/ivProfileImage"
+            android:layout_toEndOf="@+id/ivProfileImage"
+            android:layout_marginTop="5dp" />
 
 
     </RelativeLayout>

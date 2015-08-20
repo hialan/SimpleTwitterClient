@@ -9,12 +9,15 @@ import android.view.ViewGroup;
 
 import com.codepath.apps.mysimpletweets.TwitterApplication;
 import com.codepath.apps.mysimpletweets.TwitterClient;
+import com.codepath.apps.mysimpletweets.listeners.EndlessScrollListener;
 import com.codepath.apps.mysimpletweets.models.Tweet;
 import com.loopj.android.http.JsonHttpResponseHandler;
 
 import org.apache.http.Header;
 import org.json.JSONArray;
 import org.json.JSONObject;
+
+import java.util.ArrayList;
 
 public class UserTimelineFragment extends TweetsListFragment {
 
@@ -39,27 +42,25 @@ public class UserTimelineFragment extends TweetsListFragment {
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         View v = super.onCreateView(inflater, container, savedInstanceState);
 
-        /*
         this.setOnScrollListener(new EndlessScrollListener() {
             @Override
             public void onLoadMore(int page, int totalItemsCount) {
                 ArrayList<Tweet> tweets = getTweets();
                 Tweet tweet = tweets.get(tweets.size() - 1);
-                populateTimeline();
+                populateTimeline(tweet.getUniqueId());
             }
         });
-        */
 
-        populateTimeline();
+        populateTimeline(-1);
 
         return v;
     }
 
     // Send an API request
     // convert Json to TimeLine object
-    private void populateTimeline() {
+    private void populateTimeline(long max_id) {
         String screen_name = getArguments().getString("screen_name");
-        client.getUserTimeLine(screen_name, new JsonHttpResponseHandler() {
+        client.getUserTimeLine(screen_name, max_id, new JsonHttpResponseHandler() {
             // SUCCESS
             @Override
             public void onSuccess(int statusCode, Header[] headers, JSONArray json) {
@@ -76,7 +77,7 @@ public class UserTimelineFragment extends TweetsListFragment {
 
     public void onRefresh() {
         clear();
-        populateTimeline();
+        populateTimeline(-1);
         scrollToTop();
     }
 

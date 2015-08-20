@@ -11,6 +11,7 @@ import android.support.v7.app.ActionBarActivity;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Toast;
 
@@ -152,16 +153,26 @@ public class TimelineActivity extends ActionBarActivity {
         return super.onOptionsItemSelected(item);
     }
 
+    public void onClickProfileImage(View v) {
+        User user = (User) v.getTag();
+        showProfileActivity(user);
+    }
+
     public void onProfileView(MenuItem mi) {
+        showProfileActivity(loggingUserInfo);
+    }
+
+    private void showProfileActivity(User user) {
         Intent i = new Intent(this, ProfileActivity.class);
-        i.putExtra("user", loggingUserInfo);
+        i.putExtra("user", user);
         startActivity(i);
     }
 
     // Return the order of the fragments in the view pager
-    public class TweetsPagerAdapter extends FragmentPagerAdapter {
+    public class TweetsPagerAdapter extends FragmentPagerAdapter /* implements PagerSlidingTabStrip.IconTabProvider */ {
         final int PAGE_COUNT = 2;
-        private String tabTitles[] = {"Home", "Mentions"};
+        private String tabTitles[] = {"⌂ Home", "＠ Mentions"};
+        private int tabIcons[] = {R.drawable.ic_home, R.drawable.ic_at};
 
         private Map<Integer, String> mFragmentTags;
         private FragmentManager mFragmentManager;
@@ -214,6 +225,10 @@ public class TimelineActivity extends ActionBarActivity {
         @Override
         public int getCount() {
             return tabTitles.length;
+        }
+
+        public int getPageIconResId(int i) {
+            return tabIcons[i];
         }
     }
 }
