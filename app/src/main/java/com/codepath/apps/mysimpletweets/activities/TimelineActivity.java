@@ -1,13 +1,19 @@
 package com.codepath.apps.mysimpletweets.activities;
 
+import android.content.Context;
 import android.content.Intent;
+import android.graphics.drawable.Drawable;
 import android.os.Bundle;
+import android.support.design.widget.TabLayout;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentManager;
 import android.support.v4.app.FragmentPagerAdapter;
 import android.support.v4.view.ViewPager;
 import android.support.v4.widget.SwipeRefreshLayout;
 import android.support.v7.app.ActionBarActivity;
+import android.text.SpannableString;
+import android.text.Spanned;
+import android.text.style.ImageSpan;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -15,7 +21,6 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Toast;
 
-import com.astuetz.PagerSlidingTabStrip;
 import com.codepath.apps.mysimpletweets.R;
 import com.codepath.apps.mysimpletweets.TwitterApplication;
 import com.codepath.apps.mysimpletweets.TwitterClient;
@@ -37,22 +42,53 @@ public class TimelineActivity extends ActionBarActivity {
     private final int REQUEST_COMPOSE = 20;
 
     private TwitterClient client;
-    private TweetsListFragment fragmentTweetsList;
+    //private TweetsListFragment fragmentTweetsList;
     private SwipeRefreshLayout swipeContainer;
     private User loggingUserInfo = null;
+
+    private ViewPager viewPager;
+    private TweetsPagerAdapter pagerAdapter;
+    private TabLayout tabLayout;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_timeline);
 
-        final ViewPager viewPager = (ViewPager) findViewById(R.id.viewpager);
-        final TweetsPagerAdapter pagerAdapter = new TweetsPagerAdapter(getSupportFragmentManager());
+        pagerAdapter = new TweetsPagerAdapter(getSupportFragmentManager(), TimelineActivity.this);
+        viewPager = (ViewPager) findViewById(R.id.viewpager);
         viewPager.setAdapter(pagerAdapter);
+
+        //fragmentTweetsList = (TweetsListFragment) pagerAdapter.getFragment(0);
+
+        // Give the TabLayout the ViewPager
+        tabLayout = (TabLayout) findViewById(R.id.tabs);
+        tabLayout.setupWithViewPager(viewPager);
+
+        /*
+        tabLayout.setOnTabSelectedListener(new TabLayout.OnTabSelectedListener() {
+            @Override
+            public void onTabSelected(TabLayout.Tab tab) {
+                int position = tab.getPosition();
+                fragmentTweetsList = (TweetsListFragment) pagerAdapter.getFragment(position);
+
+            }
+
+            @Override
+            public void onTabUnselected(TabLayout.Tab tab) {
+
+            }
+
+            @Override
+            public void onTabReselected(TabLayout.Tab tab) {
+
+            }
+        });
+        */
+
+        /*
         final PagerSlidingTabStrip tabStrip = (PagerSlidingTabStrip) findViewById(R.id.tabs);
         tabStrip.setViewPager(viewPager);
-
-        fragmentTweetsList = (TweetsListFragment) pagerAdapter.getFragment(0);
 
         tabStrip.setOnPageChangeListener(new ViewPager.OnPageChangeListener() {
             @Override
@@ -70,6 +106,7 @@ public class TimelineActivity extends ActionBarActivity {
 
             }
         });
+        */
 
         client = TwitterApplication.getRestClient(); // singleton client
 
@@ -84,6 +121,7 @@ public class TimelineActivity extends ActionBarActivity {
         swipeContainer.setOnRefreshListener(new SwipeRefreshLayout.OnRefreshListener() {
             @Override
             public void onRefresh() {
+                TweetsListFragment fragmentTweetsList = (TweetsListFragment) pagerAdapter.getFragment(tabLayout.getSelectedTabPosition());
                 fragmentTweetsList.onRefresh();
                 swipeContainer.setRefreshing(false);
             }
@@ -120,6 +158,7 @@ public class TimelineActivity extends ActionBarActivity {
             client.updateStatus(tweeting, new JsonHttpResponseHandler() {
                 @Override
                 public void onSuccess(int statusCode, Header[] headers, JSONObject response) {
+                    TweetsListFragment fragmentTweetsList = (TweetsListFragment) pagerAdapter.getFragment(tabLayout.getSelectedTabPosition());
                     fragmentTweetsList.insert(Tweet.fromJSON(response), 0);
                     fragmentTweetsList.scrollToTop();
                     Toast.makeText(TimelineActivity.this, "Success!", Toast.LENGTH_SHORT).show();
@@ -171,17 +210,19 @@ public class TimelineActivity extends ActionBarActivity {
     // Return the order of the fragments in the view pager
     public class TweetsPagerAdapter extends FragmentPagerAdapter /* implements PagerSlidingTabStrip.IconTabProvider */ {
         final int PAGE_COUNT = 2;
-        private String tabTitles[] = {"⌂ Home", "＠ Mentions"};
+        private String tabTitles[] = {"Home", "Mentions"};
         private int tabIcons[] = {R.drawable.ic_home, R.drawable.ic_at};
 
         private Map<Integer, String> mFragmentTags;
         private FragmentManager mFragmentManager;
+        private Context context;
 
         // Adapter gets the manager insert or remove fragment from activity
-        public TweetsPagerAdapter(FragmentManager fm) {
+        public TweetsPagerAdapter(FragmentManager fm, Context ct) {
             super(fm);
             mFragmentManager = fm;
             mFragmentTags = new HashMap<Integer, String>();
+            context = ct;
         }
 
         @Override
@@ -218,7 +259,14 @@ public class TimelineActivity extends ActionBarActivity {
         // Return the title
         @Override
         public CharSequence getPageTitle(int position) {
-            return tabTitles[position];
+            Drawable image = context.getResources().getDrawable(tabIcons[position]);
+            image.setBounds(0, 0, image.getIntrinsicWidth(), image.getIntrinsicHeight());
+            SpannableString sb = new SpannableString("   " + tabTitles[position]);
+            ImageSpan imageSpan = new ImageSpan(image, ImageSpan.ALIGN_BOTTOM);
+            sb.setSpan(imageSpan, 0, 1, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+
+            //return tabTitles[position];
+            return sb;
         }
 
         // Get page count
